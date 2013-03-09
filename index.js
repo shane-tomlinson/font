@@ -255,15 +255,22 @@ var NameRecord = StructT('NameRecord', {
 // ##################################################################################
 // ### The post table contains additional information needed to use TrueType or   ###
 // ### OpenType™ fonts on PostScript printers.                                    ###
-// ###                                                                            ###
-// ### format and italicAngle are 16.16 fixed point numbers. Reify does not       ###
-// ### have fixed point representations, a Uint32 is used instead. Values must    ###
-// ### be converted.                                                              ###
 // ##################################################################################
 
+var Fixed16dot16 = reified('Uint32').typeDef('Fixed16dot16', function(reify){
+  var fixed = reify();
+  if (fixed & 0x80000000) {
+    // negative number is stored in two's complement
+    fixed = -(~fixed + 1);
+  }
+
+  return fixed / 65536;
+});
+
+
 TableTypes['post'] = StructT('post', {
-  format            : Uint32,
-  italicAngle       : Uint32,
+  format            : Fixed16dot16,
+  italicAngle       : Fixed16dot16,
   underlinePosition : Int16,
   underlineThickness: Int16,
   isFixedPitch      : Uint32,
@@ -272,6 +279,4 @@ TableTypes['post'] = StructT('post', {
   minMemType1       : Uint32,
   maxMemType1       : Uint32
 });
-
-
 
