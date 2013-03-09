@@ -199,8 +199,6 @@ var UnicodePages = StructT('UnicodePages', labels.unicodeBlocks.reduce(function(
   return ret;
 }, {})).reifier(flattener);
 
-
-
 TableTypes['OS/2'] = StructT('OS2', {
   version      : Uint16,
   avgCharWidth : Int16,
@@ -253,3 +251,27 @@ var NameRecord = StructT('NameRecord', {
   length     : Uint16,
   contents   : Uint16,
 });
+
+// ##################################################################################
+// ### The post table contains additional information needed to use TrueType or   ###
+// ### OpenType™ fonts on PostScript printers.                                    ###
+// ###                                                                            ###
+// ### format and italicAngle are 16.16 fixed point numbers. Reify does not       ###
+// ### have fixed point representations, a Uint32 is used instead. Values must    ###
+// ### be converted.                                                              ###
+// ##################################################################################
+
+TableTypes['post'] = StructT('post', {
+  format            : Uint32,
+  italicAngle       : Uint32,
+  underlinePosition : Int16,
+  underlineThickness: Int16,
+  isFixedPitch      : Uint32,
+  minMemType42      : Uint32,
+  maxMemType42      : Uint32,
+  minMemType1       : Uint32,
+  maxMemType1       : Uint32
+});
+
+
+
