@@ -57,8 +57,41 @@ function Font(buffer, filename){
   this.tables.forEach(function(table){
     var tag = table.tag.reify();
     if (tag in TableTypes) {
-      table.contents.cast(TableTypes[tag]);
+      if (tag === 'name') {
+        var data = table.contents.clone().cast(TableTypes[tag]).reify();
+        var nameRecordCount = data.count;
+        // The number of name records varies from font to font. Fetch the
+        // table, look at the count, and then make the full structure.
+        var NamePointersDef = clone(NameStructBase);
+        NamePointersDef.namePointers = ArrayT(NameRecord, nameRecordCount);
+
+        var NamePointersStruct = StructT('NamePointersStruct', NamePointersDef);
+        var namePointers = table.contents.clone().cast(NamePointersStruct).reify().namePointers;
+
+        var NameRecordsDef = namePointers.reduce(function(ret, namePointer, index) {
+          // Key by index because V8 reorders items in an object if keyed by
+          // number
+          ret[index] = CharT(namePointer.length);
+
+          return ret;
+        }, {});
+
+        var AllNamesDef = {
+          format            : Uint16,
+          count             : Uint16,
+          stringOffset      : Uint16,
+          namePointers      : ArrayT(NameRecord, nameRecordCount),
+          names             : StructT('AllNames', NameRecordsDef)
+        };
+        var NamesStruct = StructT('AllFullNames', AllNamesDef);
+
+        table.contents.cast(NamesStruct);
+      }
+      else {
+        table.contents.cast(TableTypes[tag]);
+      }
     }
+
   });
 }
 
@@ -280,3 +313,19 @@ TableTypes['post'] = StructT('post', {
   maxMemType1       : Uint32
 });
 
+
+var NameStructBase = {
+  format            : Uint16,
+  count             : Uint16,
+  stringOffset      : Uint16
+};
+TableTypes['name'] = StructT('name', NameStructBase);
+
+
+function clone(obj) {
+  var target = {};
+  for (var key in obj) {
+    target[key] = obj[key];
+  }
+  return target;
+}
